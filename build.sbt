@@ -4,7 +4,9 @@ ThisBuild / scalaVersion := "2.12.10"
 ThisBuild / version      := "0.0.1-SNAPSHOT"
 ThisBuild / useCoursier  := true
 
-lazy val root = (project in file("."))
+val framelessVersion = "0.8.0"
+
+lazy val `quill-spark-examples` = (project in file("."))
   .settings(
     resolvers ++= Seq(
       "jcenter" at "https://jcenter.bintray.com"
@@ -15,7 +17,7 @@ lazy val root = (project in file("."))
           Seq("-Ypatmat-exhaust-depth", "40")
         case Some((2, 11)) =>
           Seq("-Xlint",
-            "-Xfatal-warnings",
+            //"-Xfatal-warnings",
             "-Xfuture",
             "-deprecation",
             "-Yno-adapted-args",
@@ -23,8 +25,8 @@ lazy val root = (project in file("."))
               "-Xsource:2.12" // needed so existential types work correctly
           )
         case Some((2, 12)) =>
-          Seq("-Xlint:-unused,_",
-
+          Seq(
+            "-Xlint:-unused,_",
             "-Xfuture",
             "-deprecation",
             "-Yno-adapted-args",
@@ -34,16 +36,22 @@ lazy val root = (project in file("."))
         case _ => Seq()
       }
     },
+
+
+
+
     libraryDependencies ++= Seq(
       "io.getquill" %% "quill-jdbc" % "3.4.8",
       "io.getquill" %% "quill-spark" % "3.4.8",
       "org.apache.spark" %% "spark-core" % "2.4.4",
       "org.apache.spark" %% "spark-streaming" % "2.4.4",
       "org.apache.spark" %% "spark-hive" % "2.4.4",
-      "net.andreinc.mockneat" % "mockneat" % "0.3.7"
+      "net.andreinc.mockneat" % "mockneat" % "0.3.7",
 
-      // "com.google.guava" % "guava" % "28.1-jre"
-      //"com.typesafe.akka" %% "akka-slf4j" % "2.5.25",
-      //"ch.qos.logback" % "logback-classic" % "1.2.3"
+      "org.typelevel" %% "frameless-dataset" % framelessVersion,
+      "org.typelevel" %% "frameless-ml"      % framelessVersion,
+      "org.typelevel" %% "frameless-cats"    % framelessVersion,
+
+      "org.typelevel" %% "spire" % "0.14.1"
     )
   )

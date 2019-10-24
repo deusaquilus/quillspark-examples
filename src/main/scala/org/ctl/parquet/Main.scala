@@ -3,6 +3,7 @@ package org.ctl.parquet
 import io.getquill.QuillSparkContext
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
+import org.ctl.SetRootLogger
 
 object Main {
 
@@ -13,6 +14,8 @@ object Main {
     .master("local")
     .enableHiveSupport()
     .getOrCreate()
+
+  SetRootLogger.setLevel()
 
   implicit val sqlContext = spark.sqlContext
   import sqlContext.implicits._
@@ -51,53 +54,74 @@ object Main {
     }
 
     val americanClients =
-      americans.map(a => HumanoidLivingSomewhere(a.firstName, a.lastName, a.address_id))
-        .joinWith(addresses, $"whereHeLives_id" === $"id")
-        .filter { tup => tup._2.current == true }
-        .map { case (t, a) => s"Hello ${t.called} ${t.alsoCalled} of ${a.city}" }
-
-
-//    val americanClients =
-//      americans.map(a => HumanoidLivingSomewhere)
-//        .joinWith(addresses, $"whereHeLives_id" === $"id")
-//        .filter { tup => Boolean }
-//        .map { => String }
-
-    val combined =
-      americans.map(a => HumanoidLivingSomewhere(a.firstName, a.lastName, a.address_id))
+      addressToSomeone(americans.map(a => HumanoidLivingSomewhere(a.firstName, a.lastName, a.address_id)))
 
     americanClients.explain()
   }
 
   def usingQuill() = {
+
+
+
     import QuillSparkContext._
 
-    val americans = liftQuery(spark.read.parquet("output/americans").as[American])
-    val addresses = liftQuery(spark.read.parquet("output/addresses").as[Address])
-
-//    val addressToSomeone = quote {
-//      (t: Query[HumanoidLivingSomewhere]) =>
-//        t.join(addresses).on((t, a) => a.id == t.whereHeLives_id).filter(_._2.current == true).map(_._1)
-//    }
+    val americansDS = spark.read.parquet("output/americans").as[American]
+    val addressesDS = spark.read.parquet("output/addresses").as[Address]
+    val americans = liftQuery(americansDS)
+    val addresses = liftQuery(addressesDS)
 
     val addressToSomeone = quote {
-      (hum: Query[HumanoidLivingSomewhere]) =>
+      (humanoids: Query[HumanoidLivingSomewhere]) =>
         for {
-          t <- hum
-          aa <- addresses.join(a => a.id == t.whereHeLives_id) //if (a.current == true)
-        } yield t
+          h <- humanoids
+          a <- addresses.join(a => a.id == h.whereHeLives_id) if (a.current)
+        } yield "Hello " + h.called + " " + h.alsoCalled + " of " + a.city
     }
 
-    val americanClients = quote {
-      addressToSomeone(americans.map(a => HumanoidLivingSomewhere(a.firstName, a.lastName, a.address_id)))
+    val output = quote {
+      addressToSomeone(
+        americans.map(am =>
+          HumanoidLivingSomewhere(am.firstName, am.lastName, am.address_id)
+        )
+      )
     }
 
-    run(americanClients).explain() //helloo
+    val yetiOfSomeplace: Dataset[String] =
+      run(addressToSomeone(americans.map(am => HumanoidLivingSomewhere(am.firstName, am.lastName, am.address_id))))
+
+
+    val superItem = spark.read.parquet("output/americans").as[American]
+    //superItem.agg
   }
 
 
+  object SqlExamples {
+    spark.read.parquet("output/americans").as[American].createOrReplaceTempView("americans")
+    spark.read.parquet("output/addresses").as[Address].createOrReplaceTempView("addresses")
+
+    def example() = {
+      spark.sql(
+        """
+          |select concat('Hello ', t.called, ' ', t.alsoCalled, ' of ', a.city) as _1
+          |from (
+          |  select firstName as called, lastName as alsoCalled, address_id as whereHeLives_id
+          |  from americans
+          |) as t
+          |join addresses a on (t.whereHeLives_id = a.id)
+          |where a.current = true
+          |""".stripMargin
+      )
+    }
+
+    def apply() = {
+      example().show(false)
+      example().explain()
+    }
+  }
 
   def main(args: Array[String]):Unit = {
-    usingQuill()
+    //usingQuill()
+    //usingDataFrame()
+    SqlExamples()
   }
 }
