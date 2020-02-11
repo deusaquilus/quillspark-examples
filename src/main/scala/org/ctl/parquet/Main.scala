@@ -5,6 +5,9 @@ import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
 import org.ctl.SetRootLogger
 
+
+
+
 object Main {
 
   val spark = SparkSession.builder()
@@ -87,7 +90,7 @@ object Main {
     }
 
     val yetiOfSomeplace: Dataset[String] =
-      run(addressToSomeone(americans.map(am => HumanoidLivingSomewhere(am.firstName, am.lastName, am.address_id))))
+      run(output)
 
 
     val superItem = spark.read.parquet("output/americans").as[American]

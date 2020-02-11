@@ -54,11 +54,6 @@ object Main {
   )
 
 
-  """
-    |
-    |""".stripMargin
-
-
   // language=SQL
   """
     |SELECT

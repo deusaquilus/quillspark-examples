@@ -6,6 +6,7 @@ ThisBuild / useCoursier  := true
 
 val framelessVersion = "0.8.0"
 
+
 lazy val `quill-spark-examples` = (project in file("."))
   .settings(
     resolvers ++= Seq(
@@ -37,15 +38,16 @@ lazy val `quill-spark-examples` = (project in file("."))
       }
     },
 
-
-
-
     libraryDependencies ++= Seq(
-      "io.getquill" %% "quill-jdbc" % "3.4.8",
-      "io.getquill" %% "quill-spark" % "3.4.8",
+      "com.amazonaws" % "aws-java-sdk" % "1.11.717",
+      "io.getquill" %% "quill-jdbc" % "3.5.0",
+      "io.getquill" %% "quill-spark" % "3.5.0",
       "org.apache.spark" %% "spark-core" % "2.4.4",
       "org.apache.spark" %% "spark-streaming" % "2.4.4",
+      "org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.4",
+      "org.apache.spark" %% "spark-streaming-kafka-0-10" % "2.4.4",
       "org.apache.spark" %% "spark-hive" % "2.4.4",
+      "org.apache.spark" %% "spark-avro" % "2.4.4",
       "net.andreinc.mockneat" % "mockneat" % "0.3.7",
 
       "org.typelevel" %% "frameless-dataset" % framelessVersion,
